@@ -1,9 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware  # NEW
 from sqlalchemy.orm import Session
-from database import SessionLocal, engine
-from models import Video
-from schema import VideoCreate, VideoDelete, VideoList
+from .database import SessionLocal
+from .models import Video
+from .schema import VideoCreate
 from pytube import YouTube
 
 
@@ -31,3 +31,23 @@ def get_db():
 @app.get("/")
 def home():
     return "Hello, World!"
+
+
+@app.post("/download/")
+def download_video(video: VideoCreate, db: Session = Depends(get_db)):
+    try:
+        mydownload = YouTube(video.url)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid YouTube URL")
+
+    video_file = mydownload.streams.get_by_resolution(
+        '720p')  # mydownload.streams.get_highest_resolution()
+    video_file.download('../downloads')
+
+    db_video = Video(title=mydownload.title, description=mydownload.description, url=video.url,
+                     file_path=video_file.default_filename, thumbnail_url=mydownload.thumbnail_url, filesize=video_file.filesize)
+    db.add(db_video)
+    db.commit()
+    db.refresh(db_video)
+
+    return {"message": "Video downloaded and added to database"}
