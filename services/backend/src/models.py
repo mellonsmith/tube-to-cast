@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Date
 from .database import Base
-import datetime
 
 
 class Video(Base):
@@ -13,3 +12,4 @@ class Video(Base):
     file_path = Column(String)
     thumbnail_url = Column(String)
     filesize = Column(Integer)
+    date = Column(Date)

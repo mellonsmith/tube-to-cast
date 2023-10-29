@@ -6,6 +6,7 @@ from .models import Video
 from .schema import VideoCreate
 import os
 import yt_dlp
+import pytz
 import podgen
 import datetime
 
@@ -36,7 +37,7 @@ def get_db():
 @app.post("/download/")
 def download_video(video: VideoCreate, db: Session = Depends(get_db)):
     try:
-        with yt_dlp.YoutubeDL({'format': 'bestvideo[height<=720]+bestaudio/best[height<=720]', 'outtmpl': 'downloads/%(title)s.%(ext)s'}) as ydl:
+        with yt_dlp.YoutubeDL({'format': 'best[ext=m4a]/best[ext=mp4]/best', 'outtmpl': 'downloads/%(title)s.%(ext)s'}) as ydl:
             info_dict = ydl.extract_info(video.url, download=True)
             video_file = ydl.prepare_filename(info_dict)
     except:
@@ -44,7 +45,7 @@ def download_video(video: VideoCreate, db: Session = Depends(get_db)):
 
     file_size = os.path.getsize(video_file)
     db_video = Video(title=info_dict['title'], description=info_dict['description'], url=video.url,
-                     file_path=video_file, thumbnail_url=info_dict['thumbnail'], filesize=file_size)
+                     file_path=video_file, thumbnail_url=info_dict['thumbnail'], filesize=file_size, date=datetime.datetime.now())
     db.add(db_video)
     db.commit()
     db.refresh(db_video)
@@ -62,7 +63,7 @@ def get_videos(db: Session = Depends(get_db)):
 def del_video(video_id: int, db: Session = Depends(get_db)):
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video:
-        raise HTTPException(status_code=404, detail="Video not found")
+        raise HTTPException(status_code=422, detail="Video not found")
     os.remove(video.file_path)
     db.delete(video)
     db.commit()
@@ -79,6 +80,7 @@ def generate_podcast(db: Session = Depends(get_db)):
     podcast.description = "A podcast about awesome things"
     podcast.website = "https://example.com/podcast"
     podcast.explicit = False
+    podcast.feed_url = "https://example.com/podcast/feed.rss"
 
     # Add each video to the podcast as an episode
     for video in db.query(Video).all():
@@ -86,8 +88,11 @@ def generate_podcast(db: Session = Depends(get_db)):
         episode.title = video.title
         episode.summary = video.description
         episode.thumbnail = video.thumbnail_url
+        # episode.publication_date = video.date.strftime('%a, %d %b %Y %H:%M:%S %z')
 
-        episode.media = podgen.Media(video.file_path, type="video/webm")
+        episode.media = podgen.Media(
+            video.file_path, type="video/mp4", size=video.filesize)
+
         episode.length = video.filesize
         episode.image = video.thumbnail_url
 
