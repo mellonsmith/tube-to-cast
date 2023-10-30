@@ -36,6 +36,7 @@ def get_db():
 
 @app.post("/download/")
 def download_video(video: VideoCreate, db: Session = Depends(get_db)):
+    # Download video
     try:
         with yt_dlp.YoutubeDL({'format': 'best[ext=m4a]/best[ext=mp4]/best', 'outtmpl': 'downloads/%(title)s.%(ext)s'}) as ydl:
             info_dict = ydl.extract_info(video.url, download=True)
@@ -43,12 +44,20 @@ def download_video(video: VideoCreate, db: Session = Depends(get_db)):
     except:
         raise HTTPException(status_code=400, detail="Invalid YouTube URL")
 
+    # Add video to database
     file_size = os.path.getsize(video_file)
     db_video = Video(title=info_dict['title'], description=info_dict['description'], url=video.url,
                      file_path=video_file, thumbnail_url=info_dict['thumbnail'], filesize=file_size, date=datetime.datetime.now())
     db.add(db_video)
     db.commit()
     db.refresh(db_video)
+
+    # Update podcast feed
+    try:
+        generate_podcast(db)
+    except:
+        raise HTTPException(
+            status_code=500, detail="Failed to update podcast feed")
 
     return {"message": "Video downloaded and added to database"}
 
@@ -61,12 +70,22 @@ def get_videos(db: Session = Depends(get_db)):
 
 @app.delete("/videos/{video_id}")
 def del_video(video_id: int, db: Session = Depends(get_db)):
+    # Delete video from database
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video:
         raise HTTPException(status_code=422, detail="Video not found")
-    os.remove(video.file_path)
+
+    os.remove(video.file_path)  # Delete video file
     db.delete(video)
     db.commit()
+
+    # Update podcast feed
+    try:
+        generate_podcast(db)
+    except:
+        raise HTTPException(
+            status_code=500, detail="Failed to update podcast feed")
+
     return {"message": "Video deleted"}
 
 
