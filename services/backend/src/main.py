@@ -74,7 +74,7 @@ def del_video(video_id: int, db: Session = Depends(get_db)):
 def generate_podcast(db: Session = Depends(get_db)):
     # Create a new Podcast object
     podcast = podgen.Podcast()
-
+    timezone = pytz.timezone('Europe/Berlin')
     # Set the podcast metadata
     podcast.name = "My Awesome Podcast"
     podcast.description = "A podcast about awesome things"
@@ -88,7 +88,7 @@ def generate_podcast(db: Session = Depends(get_db)):
         episode.title = video.title
         episode.summary = video.description
         episode.thumbnail = video.thumbnail_url
-        # episode.publication_date = video.date.strftime('%a, %d %b %Y %H:%M:%S %z')
+        episode.publication_date = video.date.astimezone(timezone)
 
         episode.media = podgen.Media(
             video.file_path, type="video/mp4", size=video.filesize)
