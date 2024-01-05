@@ -10,12 +10,17 @@ import yt_dlp
 import pytz
 import podgen
 import datetime
+from dotenv import load_dotenv
+
+load_dotenv("../.env")
+base_url = os.getenv("BASE_URL")
+frontend_url = os.getenv("FRONTEND_URL")
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080"],
+    allow_origins=[frontend_url],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -23,8 +28,6 @@ app.add_middleware(
 
 # Dependency to get database session
 Base.metadata.create_all(bind=engine)
-
-base_url = "http://localhost:5000"
 
 
 def get_db():
@@ -106,11 +109,11 @@ def generate_podcast(db: Session = Depends(get_db)):
     podcast = podgen.Podcast()
     timezone = pytz.timezone('Europe/Berlin')
     # Set the podcast metadata
-    podcast.name = "My Awesome Podcast"
-    podcast.description = "A podcast about awesome things"
-    podcast.website = "https://example.com/podcast"
+    podcast.name = "Tube to Cast"
+    podcast.description = "A podcast with my downloaded Videos"
+    podcast.website = frontend_url
     podcast.explicit = False
-    podcast.feed_url = "https://example.com/podcast/feed.rss"
+    podcast.feed_url = base_url + "/feed.rss"
 
     # Add each video to the podcast as an episode
     for video in db.query(Video).all():
