@@ -12,7 +12,7 @@ import podgen
 import datetime
 from dotenv import load_dotenv
 
-load_dotenv("../.env")
+load_dotenv()
 base_url = os.getenv("BASE_URL")
 frontend_url = os.getenv("FRONTEND_URL")
 
@@ -113,6 +113,7 @@ def generate_podcast(db: Session = Depends(get_db)):
     podcast.description = "A podcast with my downloaded Videos"
     podcast.website = frontend_url
     podcast.explicit = False
+    print("base_url", base_url)
     podcast.feed_url = base_url + "/feed.rss"
 
     # Add each video to the podcast as an episode

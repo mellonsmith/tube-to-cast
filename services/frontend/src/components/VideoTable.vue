@@ -11,9 +11,6 @@
                         Name
                     </th>
                     <th scope="col" class="px-6 py-3">
-                        Watch on YouTube
-                    </th>
-                    <th scope="col" class="px-6 py-3">
                         Download
                     </th>
                     <th scope="col" class="px-6 py-3">
@@ -22,15 +19,12 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="video in videos" :key="video.id" class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                <tr v-for="video in videos" :key="video.id" class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-600 dark:hover:bg-gray-650">
                     <td class="p-4">
                         <img :src="video.thumbnail_url" :alt="video.title" class="w-16 md:w-32 max-w-full max-h-full" />
                     </td>
                     <td class="px-6 py-4 font-semibold text-gray-900 dark:text-white">
-                        {{ video.title }}
-                    </td>
-                    <td class="px-6 py-4">
-                        <a :href="video.url" target="_blank" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Watch on YouTube</a>
+                        <a :href="video.url" target="_blank" class="font-medium  hover:text-blue-200 dark:hover:text-blue-200 hover:underline">{{ video.title }}</a>
                     </td>
                     <td class="px-6 py-4">
                         <button @click="downloadVideo(video.id)" class="font-medium text-green-600 dark:text-green-500 hover:underline">Download</button>  
@@ -67,7 +61,7 @@ const deleteVideo = async (id) => {
     }
 };
 const downloadVideo = (id) => {
-    window.location.href = `${process.env.VUE_APP_API_BASE_URL}/videos/${id}`;
+    window.open(`${process.env.VUE_APP_API_BASE_URL}/videos/${id}`, '_blank');
 };
 
 

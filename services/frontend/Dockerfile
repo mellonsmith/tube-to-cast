@@ -6,9 +6,13 @@ FROM node:lts-alpine
 # Set working directory
 WORKDIR /app
 
+# Install Vue CLI globally
+RUN npm install -g @vue/cli
+
 # Install dependencies
 COPY package*.json ./
 RUN npm install
+
 
 # Copy project files
 COPY . .
